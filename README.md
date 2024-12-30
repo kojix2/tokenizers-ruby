@@ -2,7 +2,7 @@
 
 :slightly_smiling_face: Fast state-of-the-art [tokenizers](https://github.com/huggingface/tokenizers) for Ruby
 
-[![Build Status](https://github.com/ankane/tokenizers-ruby/workflows/build/badge.svg?branch=master)](https://github.com/ankane/tokenizers-ruby/actions)
+[![Build Status](https://github.com/ankane/tokenizers-ruby/actions/workflows/build.yml/badge.svg)](https://github.com/ankane/tokenizers-ruby/actions)
 
 ## Installation
 
@@ -11,8 +11,6 @@ Add this line to your application’s Gemfile:
 ```ruby
 gem "tokenizers"
 ```
-
-Note: Rust and pkg-config are currently required for installation, and it can take 5-10 minutes to compile the extension.
 
 ## Getting Started
 
@@ -26,8 +24,8 @@ Encode
 
 ```ruby
 encoded = tokenizer.encode("I can feel the magic, can you?")
-encoded.ids
 encoded.tokens
+encoded.ids
 ```
 
 Decode
@@ -36,11 +34,51 @@ Decode
 tokenizer.decode(ids)
 ```
 
-Load a tokenizer from files
+## Training
+
+Create a tokenizer
 
 ```ruby
-tokenizer = Tokenizers::CharBPETokenizer.new("vocab.json", "merges.txt")
+tokenizer = Tokenizers::Tokenizer.new(Tokenizers::Models::BPE.new(unk_token: "[UNK]"))
 ```
+
+Set the pre-tokenizer
+
+```ruby
+tokenizer.pre_tokenizer = Tokenizers::PreTokenizers::Whitespace.new
+```
+
+Train the tokenizer ([example data](https://huggingface.co/docs/tokenizers/quicktour#build-a-tokenizer-from-scratch))
+
+```ruby
+trainer = Tokenizers::Trainers::BpeTrainer.new(special_tokens: ["[UNK]", "[CLS]", "[SEP]", "[PAD]", "[MASK]"])
+tokenizer.train(["wiki.train.raw", "wiki.valid.raw", "wiki.test.raw"], trainer)
+```
+
+Encode
+
+```ruby
+output = tokenizer.encode("Hello, y'all! How are you 😁 ?")
+output.tokens
+```
+
+Save the tokenizer to a file
+
+```ruby
+tokenizer.save("tokenizer.json")
+```
+
+Load a tokenizer from a file
+
+```ruby
+tokenizer = Tokenizers.from_file("tokenizer.json")
+```
+
+Check out the [Quicktour](https://huggingface.co/docs/tokenizers/quicktour) and equivalent [Ruby code](https://github.com/ankane/tokenizers-ruby/blob/master/test/quicktour_test.rb#L8) for more info
+
+## API
+
+This library follows the [Tokenizers Python API](https://huggingface.co/docs/tokenizers/index). You can follow Python tutorials and convert the code to Ruby in many cases. Feel free to open an issue if you run into problems.
 
 ## History
 
@@ -61,7 +99,7 @@ To get started with development:
 git clone https://github.com/ankane/tokenizers-ruby.git
 cd tokenizers-ruby
 bundle install
-bundle exec ruby ext/tokenizers/extconf.rb && make
+bundle exec rake compile
 bundle exec rake download:files
 bundle exec rake test
 ```
